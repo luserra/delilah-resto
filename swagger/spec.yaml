@@ -1,0 +1,1578 @@
+swagger: "2.0"
+info:
+  description: "API de pedidos online para un restaurante. Permite registrarse como cliente, ingresar, ver el listado de platos, añadir productos a favoritos y al carrito, realizar un pedido y confirmarlo. 
+    
+    Los usuarios administradores, pueden registrarse e ingresar, ver el listado de usuarios, de productos y de pedidos. También pueden tanto crear, actualizar y eliminar productos, como actualizar y eliminar pedidos."
+  version: "1.0.0"
+  title: "Delilah Restó"
+  contact:
+    email: "luciaserra.ls@gmail.com"
+
+tags:
+- name: "usuarios"
+  description: "Operaciones sobre usuarios"
+- name: "productos"
+  description: "Operaciones sobre productos"
+- name: "carrito"
+  description: "Operaciones sobre carrito"
+- name: "pedidos"
+  description: "Operaciones sobre pedidos"
+schemes:
+- https
+- http
+paths:
+  /usuarios/registro:
+    post:
+      tags:
+      - "usuarios"
+      summary: "Registrar nuevo usuario"
+      description: "Permite registrar una nueva cuenta."
+      operationId: "registro"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Registrar nuevo usuario"
+        required: true
+        schema:
+          $ref: "#/definitions/Registro"
+      responses:
+        '201':
+          description: Registro exitoso
+          schema:
+            $ref: '#/definitions/RespuestaRegistro'
+        '400':
+          description: Registro no válido 
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 400
+              message:
+                type: string
+                example: La cuenta ya existe
+  /usuarios/ingresar:
+    post:
+      tags:
+      - "usuarios"
+      summary: "Ingresar a la cuenta"
+      description: "Permite al usuario ingresar con usuario o correo electrónico y contraseña"
+      operationId: "ingresar"
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Los datos del usuario para autenticarlo.
+          required: true
+          schema:
+            $ref: '#/definitions/DatosUsuario'
+      responses:
+        '200':
+          description: Ingreso exitoso
+          schema:
+            $ref: '#/definitions/RespuestaIngresar'
+        '400':
+          description: Ingreso no válido
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 400
+              message:
+                type: string
+                example: Datos de usuario y/o clave incorrectos.
+  /usuarios:
+    get:
+      tags:
+        - usuarios
+      summary: Ver usuarios registrados - Rol admin
+      description: "Recupera todos los usuarios registrados - A esta información solo pueden acceder usuarios administradores."
+      operationId: verUsuarios
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            type: array
+            items: 
+              $ref: '#/definitions/Usuarios'
+        '400':
+          description: Acceso no válido
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '403':
+          description: Acceso prohibido
+          schema:
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 403
+              message:
+                type: string
+                example: Acceso prohibido
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /usuarios/{id}:
+    get:
+      tags:
+        - usuarios
+      summary: Ver un usuario específico
+      description: "Recupera los datos de un usuario específico."
+      operationId: verUsuario
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: path
+          name: id
+          type: integer
+          required: true
+          description: Identificador único del usuario (valor numérico).
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Usuarios'
+        '400':
+          description: Acceso no válido
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '403':
+          description: Acceso prohibido
+          schema:
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 403
+              message:
+                type: string
+                example: Acceso prohibido
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+                
+  /usuarios/{id}/favoritos:
+    get:
+      tags:
+        - usuarios
+      summary: Ver productos favoritos de un usuario
+      description: "Recupera todos los productos marcados como favoritos del uuario indicado."
+      operationId: verFavoritos
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description:  Clave - JWT token (Bearer)
+        - in: path
+          name: id
+          type: integer
+          required: true
+          description: Identificador único del usuario (valor numérico).
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Favoritos'
+        '400':
+          description: Acceso no válido
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '403':
+          description: Acceso prohibido
+          schema:
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 403
+              message:
+                type: string
+                example: Acceso prohibido
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /usuarios/{id}/productos/{idProducto}/favoritos:
+    post:
+      tags:
+        - usuarios
+      summary: Agregar un producto a favoritos
+      description: "Permite agregar un producto a favoritos"
+      operationId: agregarFav
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: path
+          name: id
+          type: integer
+          required: true
+          description: Identificador único del usuario (valor numérico).
+        - in: path
+          name: idProducto
+          type: integer
+          required: true
+          description: Identificador único del producto a agregar a favoritos (valor numérico).
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            $ref: '#/definitions/RespAgregarFav'
+        '400':
+          description: Operación no válida
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: El producto ya fue agregado a favoritos.
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /usuarios/{id}/favoritos/{idProducto}:
+    delete:
+      tags:
+        - usuarios
+      summary: Eliminar un producto de favoritos
+      description: "Permite eliminar un producto de favoritos"
+      operationId: eliminarFav
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: path
+          name: id
+          type: integer
+          required: true
+          description: Identificador único del usuario (valor numérico).
+        - in: path
+          name: idProducto
+          type: integer
+          required: true
+          description: Identificador único del producto a eliminar de favoritos (valor numérico).
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            $ref: '#/definitions/RespEliminarFav'
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /productos:
+    get:
+      tags:
+        - productos
+      summary: Ver productos
+      description: "Recupera todos los productos cargados en la base de datos."
+      operationId: verProductos
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Productos'
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+    post:
+      tags:
+        - productos
+      summary: Crear un producto - Rol admin
+      description: "Permite crear un nuevo producto. Esto solo pueden realizarlo usuarios administradores."
+      operationId: crearProducto
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: body
+          name: body
+          description: Objeto json - crear producto
+          required: true
+          schema:
+            $ref: '#/definitions/CrearProducto'
+      responses:
+        '201':
+          description: Operación exitosa
+          schema:
+            $ref: '#/definitions/RespCrearProducto'
+        '400':
+          description: Operación no válida
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: El producto ya existe
+        '403':
+          description: Operación prohibida
+          schema:
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 403
+              message:
+                type: string
+                example: Operación prohibida
+  /productos/{id}:
+    patch:
+      tags:
+        - productos
+      summary: Actualizar los datos de un producto específico - Rol admin
+      description: "Permite actualizar toda la información de un producto específico. Esto solo pueden realizarlo usuarios administradores."
+      operationId: actualizarProducto
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: path
+          name: id
+          type: integer
+          required: true
+          description: Identificador único del producto a actualizar (valor numérico).
+        - in: body
+          name: body
+          description: >-
+            Para actualizar el producto, se deben indicar los campos a ser actualizados con sus respectivos valores.
+          required: true
+          schema:
+            $ref: '#/definitions/ActualizarProducto'
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            $ref: '#/definitions/RespActualizarProducto'
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '403':
+          description: Operación prohibida
+          schema:
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 403
+              message:
+                type: string
+                example: Operación prohibida
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+    delete:
+      tags:
+        - productos
+      summary: Eliminar un producto específico - Rol admin
+      description: "Permite eliminar un producto"
+      operationId: eliminarProducto
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: path
+          name: id
+          type: integer
+          required: true
+          description: Identificador único del producto a eliminar (valor numérico).
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            $ref: '#/definitions/RespEliminarProducto'
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '403':
+          description: Operación prohibida
+          schema:
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 403
+              message:
+                type: string
+                example: Operación prohibida
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /carrito/pedidos/productos/{idProducto}:
+    post:
+      tags:
+        - carrito
+      summary: Agregar un producto al carrito
+      description: "Permite agregar un producto al carrito"
+      operationId: agregarCarrito
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: path
+          name: idProducto
+          type: integer
+          required: true
+          description: Identificador único del producto a agregar al carrito (valor numérico).
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            $ref: '#/definitions/RespAgregarCarrito'
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            example: 'status_code: 404'
+            
+  /carrito/{idUsuario}/pedidos/{id}:
+    get:
+      tags:
+        - carrito
+      summary: Ver el carrito
+      description: "Permite al usuario ver los productos en su carrito."
+      operationId: verCarrito
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: path
+          name: idUsuario
+          type: integer
+          required: true
+          description:  Identificador único del usuario (valor numérico).
+        - in: path
+          name: id
+          type: integer
+          required: true
+          description:  Identificador único del pedido en el carrito (valor numérico).
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            $ref: '#/definitions/RespVerCarrito'
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /carrito/pedidos/{idPedido}/productos/{idProducto}:
+    delete:
+      tags:
+        - carrito
+      summary: Eliminar un producto del carrito
+      description: "Permite eliminar un producto del carrito"
+      operationId: eliminarDelCarrito
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: path
+          name: idPedido
+          type: integer
+          required: true
+          description: Identificador único del pedido a eliminar del carrito (valor numérico).
+        - in: path
+          name: idProducto
+          type: integer
+          required: true
+          description: Identificador único del producto a eliminar del carrito (valor numérico).
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            $ref: '#/definitions/RespEliminarDelCarrito'
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /confirmar/pedidos/{id}:
+    patch:
+      tags:
+        - pedidos
+      summary: Confirmar pedido
+      operationId: confirmar
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: path
+          name: id
+          type: integer
+          required: true
+          description: Identificador único del pedido a confirmar (valor numérico).
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            $ref: '#/definitions/RespConfirmar'
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /pedidos:
+    get:
+      tags:
+        - pedidos
+      summary: Ver todos los pedidos - Rol admin
+      operationId: verPedidos
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Pedidos'
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /pedidos/{id}:
+    patch:
+      tags:
+        - pedidos
+      summary: Actualizar el estado del pedido - Rol admin
+      description: "Permite actualizar el estado de un pedido. Esto solo pueden realizarlo usuarios administradores."
+      operationId: actualizarPedido
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: path
+          name: id
+          type: integer
+          required: true
+          description: Identificador único del pedido a actualizar (valor numérico).
+        - in: body
+          name: body
+          description: |-
+            Actualizar estado - Valores permitidos:
+             1 (equivale a Nuevo),  
+             2 (equivale a Confirmado),  
+             3 (equivale a En Preparación),  
+             4 (equivale a Enviando),  
+             5 (equivale a Cancelado),  
+              6 (equivale a Entregado)
+          schema:
+            type: object
+            properties:
+              idStatus:
+                type: integer
+                format: int64
+                example: '3'
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            $ref: '#/definitions/RespActualizarPedido'
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+    delete:
+      tags:
+        - pedidos
+      summary: Eliminar un pedido - Rol admin
+      description: "Permite eliminar un pedido. Esto solo pueden realizarlo usuarios administradores."
+      operationId: eliminarPedido
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: path
+          name: id
+          type: integer
+          required: true
+          description: Identificador único del pedido a eliminar (valor numérico).
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            $ref: '#/definitions/RespEliminarPedido'
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+    get:
+      tags: 
+      - pedidos
+      summary: Ver un pedido específico
+      description: "Permite ver un pedido específico."
+      operationId: verPedido
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+        - in: path
+          name: id
+          type: integer
+          required: true
+          description: Identificador único del pedido (valor numérico).
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            $ref: '#/definitions/RespVerPedido'
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /pedidos/nuevos:
+    get:
+      tags:
+        - pedidos
+      summary: Ver pedidos nuevos - Rol admin
+      description: "Permite ver los pedidos nuevos. Esto solo pueden realizarlo usuarios administradores." 
+      operationId: verNuevos
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                estado:
+                  type: string
+                  example: "Nuevo"
+                fecha:
+                  type: string
+                  example: '2021-05-17T21:17:20.000Z'
+                id_pedido:
+                  type: integer
+                  format: int64
+                  example: 70
+                id_pago:
+                  type: integer
+                  format: int64
+                  example: 1
+                total:
+                  type: integer
+                  format: int64
+                  example: 2000
+                id_usuario:
+                  type: "integer"
+                  format: "int64"
+                  example: 12
+                nombre:
+                  type: string
+                  example: "Lucía Serra"
+                direccion:
+                  type: string
+                  example: "Chacabuco 202"
+                
+                descripcion:
+                  type: array
+                  items:
+                    type: string
+                    example: "4x Hamburguesa clásica"
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /pedidos/confirmados:
+    get:
+      tags:
+        - pedidos
+      summary: Ver pedidos confirmados - Rol admin
+      description: "Permite ver los pedidos confirmados. Esto solo pueden realizarlo usuarios administradores." 
+      operationId: verConfirmados
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                estado:
+                  type: string
+                  example: "Confirmado"
+                fecha:
+                  type: string
+                  example: '2021-05-17T21:29:16.000Z'
+                id_pedido:
+                  type: integer
+                  format: int64
+                  example: 70
+                id_pago:
+                  type: integer
+                  format: int64
+                  example: 1
+                total:
+                  type: integer
+                  format: int64
+                  example: 2000
+                id_usuario:
+                  type: "integer"
+                  format: "int64"
+                  example: 12
+                nombre:
+                  type: string
+                  example: "Lucía Serra"
+                direccion:
+                  type: string
+                  example: "Chacabuco 202"
+                
+                descripcion:
+                  type: array
+                  items:
+                    type: string
+                    example: "4x Hamburguesa clásica"
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /pedidos/preparando:
+    get:
+      tags:
+        - pedidos
+      summary: Ver pedidos en preparación - Rol admin
+      description: "Permite ver los pedidos en preparación. Esto solo pueden realizarlo usuarios administradores." 
+      operationId: verPreparando
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                estado:
+                  type: string
+                  example: "Preparando"
+                fecha:
+                  type: string
+                  example: '2021-05-17T21:17:20.000Z'
+                id_pedido:
+                  type: integer
+                  format: int64
+                  example: 70
+                id_pago:
+                  type: integer
+                  format: int64
+                  example: 1
+                total:
+                  type: integer
+                  format: int64
+                  example: 2000
+                id_usuario:
+                  type: "integer"
+                  format: "int64"
+                  example: 15
+                nombre:
+                  type: string
+                  example: "Lucía Serra"
+                direccion:
+                  type: string
+                  example: "Chacabuco 202"
+                
+                descripcion:
+                  type: array
+                  items:
+                    type: string
+                    example: "4x Hamburguesa clásica"
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /pedidos/enviando:
+    get:
+      tags:
+        - pedidos
+      summary: Ver pedidos enviando - Rol admin
+      description: "Permite ver los pedidos enviando. Esto solo pueden realizarlo usuarios administradores." 
+      operationId: verEnviando
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                estado:
+                  type: string
+                  example: "Enviando"
+                fecha:
+                  type: string
+                  example: '2021-05-17T21:35:03.000Z'
+                id_pedido:
+                  type: integer
+                  format: int64
+                  example: 70
+                id_pago:
+                  type: integer
+                  format: int64
+                  example: 1
+                total:
+                  type: integer
+                  format: int64
+                  example: 2000
+                id_usuario:
+                  type: "integer"
+                  format: "int64"
+                  example: 15
+                nombre:
+                  type: string
+                  example: "Lucía Serra"
+                direccion:
+                  type: string
+                  example: "Chacabuco 202"
+                
+                descripcion:
+                  type: array
+                  items:
+                    type: string
+                    example: "4x Hamburguesa clásica"
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 40
+  /pedidos/cancelados:
+    get:
+      tags:
+        - pedidos
+      summary: Ver pedidos cancelados - Rol admin
+      description: "Permite ver los pedidos cancelados. Esto solo pueden realizarlo usuarios administradores." 
+      operationId: verCancelados
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                estado:
+                  type: string
+                  example: "Cancelado"
+                fecha:
+                  type: string
+                  example: '2021-05-17T21:17:20.000Z'
+                id_pedido:
+                  type: integer
+                  format: int64
+                  example: 70
+                id_pago:
+                  type: integer
+                  format: int64
+                  example: 1
+                total:
+                  type: integer
+                  format: int64
+                  example: 2000
+                id_usuario:
+                  type: "integer"
+                  format: "int64"
+                  example: 15
+                nombre:
+                  type: string
+                  example: "Lucía Serra"
+                direccion:
+                  type: string
+                  example: "Chacabuco 202"
+                
+                descripcion:
+                  type: array
+                  items:
+                    type: string
+                    example: "4x Hamburguesa clásica"
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  /pedidos/entregados:
+    get:
+      tags:
+        - pedidos
+      summary: Ver pedidos entregados - Rol admin
+      description: "Permite ver los pedidos entregados. Esto solo pueden realizarlo usuarios administradores." 
+      operationId: verEntregados
+      produces:
+        - application/json
+      parameters:
+        - name: Token del usuario
+          in: header
+          required: true
+          type: string
+          description: Clave - JWT token (Bearer)
+      responses:
+        '200':
+          description: Operación exitosa
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                estado:
+                  type: string
+                  example: "Entregado"
+                fecha:
+                  type: string
+                  example: '2021-05-17T21:17:20.000Z'
+                id_pedido:
+                  type: integer
+                  format: int64
+                  example: 70
+                id_pago:
+                  type: integer
+                  format: int64
+                  example: 1
+                total:
+                  type: integer
+                  format: int64
+                  example: 2000
+                id_usuario:
+                  type: "integer"
+                  format: "int64"
+                  example: 15
+                nombre:
+                  type: string
+                  example: "Lucía Serra"
+                direccion:
+                  type: string
+                  example: "Chacabuco 202"
+                
+                descripcion:
+                  type: array
+                  items:
+                    type: string
+                    example: "4x Hamburguesa clásica"
+        '400':
+          description: Operación no válida
+          schema:
+            $ref: '#/definitions/Autenticar'
+        '404':
+          description: No encontrado
+          schema:
+            type: object
+            properties:
+              status_code:
+                type: integer
+                format: int64
+                example: 404
+  
+definitions:
+  Autenticar:
+    type: object
+    properties:
+      message:
+        type: string
+        example: Para verificar la identidad el header debe contener un token
+  Registro:
+    type: object
+    properties:
+      usuario:
+        type: string
+        example: lu_serra
+      nombre:
+        type: string
+        example: Lucía Serra
+      correo:
+        type: string
+        example: lu@gmail.com
+      telefono:
+        type: string
+        example: 351-2575284
+      direccion:
+        type: string
+        example: Chacabuco 202
+      clave:
+        type: string
+        example: delilah!Lu123
+      rol:
+        type: integer
+        format: int64
+        example: 1
+  RespuestaRegistro:
+    type: object
+    properties:
+      message:
+        type: string
+        example: Nueva cuenta creada
+  DatosUsuario:
+    type: object
+    properties:
+      usuario:
+        type: string
+        example: lu_serra
+      correo:
+        type: string
+        example: lu@gmail.com
+      clave:
+        type: string
+        example: lu123
+  RespuestaIngresar:
+    type: object
+    properties:
+      token:
+        type: string
+        example: >-
+          eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c3VhcmlvIjoibHUiLCJpZF91c3VhcmlvIjoxMiwicm9sIjoxLCJpYXQiOjE2MjEzNzc0MzV9.-CMq94g59g0DSysP78bZ7JCnHEEWI7jc55WE8bNz27U
+  Usuarios:
+    type: object
+    properties:
+      id_usuario:
+        type: integer
+        format: int64
+        example: 12
+      usuario:
+        type: string
+        example: lu_serra
+      nombre:
+        type: string
+        example: Lucía Serra
+      correo:
+        type: string
+        example: lu@gmail.com
+      telefono:
+        type: string
+        example: 351-2575284
+      direccion:
+        type: string
+        example: Chacabuco 202
+      clave:
+        type: string
+        example: delilah!Lu123
+      rol:
+        type: integer
+        format: int64
+        example: 1
+  Favoritos:
+    type: object
+    properties:
+      nombre_producto:
+        type: string
+        example: Sand Veggie
+      precio:
+        type: string
+        example: '490'
+  Productos:
+    type: object
+    properties:
+      id_producto:
+        type: integer
+        format: int64
+        example: 1
+      nombre:
+        type: string
+        example: Sand Veggie
+      precio:
+        type: integer
+        format: int64
+        example: 490
+      imagen:
+        type: string
+        example: sanveggie.jpg
+  Pedidos:
+    type: object
+    properties:
+      estado:
+        type: string
+        example: Nuevo
+      fecha:
+        type: string
+        example: '2021-05-17T21:35:03.000Z'
+      id_pedido:
+        type: integer
+        format: int64
+        example: 70
+      id_pago:
+        type: integer
+        format: int64
+        example: 1
+      total:
+        type: integer
+        format: int64
+        example: 2000
+      id_usuario:
+        type: string
+        example: '12'
+      nombre:
+        type: string
+        example: Lucía Serra
+      address:
+        type: string
+        example: Chacabuco 202
+      description:
+        type: array
+        items:
+          type: string
+          example: 4x Hamburguesa clásica
+  CrearProducto:
+    type: object
+    properties:
+      nombre:
+        type: string
+        example: Sand Veggie
+      precio:
+        type: string
+        example: 490
+      imagen:
+        type: string
+        example: sanveggie.jpg
+  ActualizarProducto:
+    type: object
+    properties:
+      nombre:
+        type: string
+        example: Sandwich Veggie
+      precio:
+        type: string
+        example: 520
+      imagen:
+        type: string
+        example: sveggie.jpg
+  RespAgregarFav:
+    type: object
+    properties:
+      message:
+        type: string
+        example: Producto agregado a favoritos exitosamente
+  RespEliminarFav:
+    type: object
+    properties:
+      status_code:
+        type: integer
+        format: int64
+        example: 200
+      message:
+        type: string
+        example: Eliminado de favoritos
+  RespCrearProducto:
+    type: object
+    properties:
+      message:
+        type: string
+        example: Nuevo producto creado exitosamente
+  RespActualizarProducto:
+    type: object
+    properties:
+      message:
+        type: string
+        example: Producto actualizado exitosamente
+  RespEliminarProducto:
+    type: object
+    properties:
+      message:
+        type: string
+        example: Producto eliminado correctamente
+  RespVerCarrito:
+      type: array
+      items:
+        $ref: '#/definitions/Carrito'
+      example:
+        - nombre: "Verde veggie"
+          precio: 450
+          cantidad : 3
+        - total: 500
+        - direccion: "Chacabuco 202"
+  Carrito: 
+    type: object
+    properties:
+      nombre:
+        type: string
+        description: Verde veggie
+      precio:
+        type: "integer"
+        format: "int64"
+        example: 450
+      cantidad: 
+        type: "integer"
+        format: "int64"
+        example: 3
+      total:
+        type: "integer"
+        format: "int64"
+        example: 1350
+      direccion:
+        type: "string"
+        example: "Chacabuco 202"
+  RespAgregarCarrito:
+    type: object
+    properties:
+      message:
+        type: string
+        example: Nuevo Producto agregado a tu carrito!
+  RespEliminarDelCarrito:
+    type: object
+    properties:
+      message:
+        type: string
+        example: Eliminaste un producto de tu carrito!
+  RespConfirmar:
+    type: object
+    properties:
+      message:
+        type: string
+        example: Pedido confirmado
+  RespVerPedido: 
+    type: array
+    items:
+        $ref: '#/definitions/Pedido'
+    example:
+        - nombre: "Verde veggie"
+          precio: 450
+          cantidad : 3
+        - total: 500
+        - estado: "Nuevo"
+        - direccion: "Chacabuco 202"
+          nombre: "Lucía Serra"
+          usuario: "lu_serra"
+          correo: "lu@gmail.com"
+          telefono: 351-2575284
+  Pedido:
+    type: object
+    properties:
+      nombre_producto:
+          type: string
+          description: Verde veggie
+      precio:
+        type: "integer"
+        format: "int64"
+        example: 450
+      precio_total:
+        type: "integer"
+        format: "int64"
+        example: 900
+      cantidad: 
+        type: "integer"
+        format: "int64"
+        example: 2
+      total:
+        type: "integer"
+        format: "int64"
+        example: 900
+      estado:
+        type: "string"
+        example: "Nuevo"
+      direccion:
+        type: "string"
+        example: "Chacabuco 202"
+      nombre:
+        type: "string"
+        example: "Lucía Serra"
+      usuario:
+        type: "string"
+        example: "lu_serra"
+      correo:
+        type: "string"
+        example: "lu@gmail.com"
+      telefono:
+        type: "string"
+        example: 351-2575284
+  RespEliminarPedido:
+    type: object
+    properties:
+      message:
+        type: string
+        example: Pedido eliminado
+  RespActualizarPedido:
+    type: object
+    properties:
+      message:
+        type: string
+        example: Estado del pedido modificado
+  
+externalDocs:
+  description: GitHub Repository
+  url: 'https://github.com/luserra/delilah-resto'
